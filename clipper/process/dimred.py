@@ -7,6 +7,12 @@ from sklearn.decomposition import PCA
 
 
 def train_dimred(models_dir: Path, store_dir: Path):
+    """Trains a dimensionality reduction model on the CLIP embeddings.
+
+    Args:
+        models_dir (Path): Directory to store the model.
+        store_dir (Path): Directory containing the vector store.
+    """
     client = chromadb.PersistentClient(path=str(store_dir))
     collection = client.get_collection(name="clip_image_embeddings")
 
@@ -21,6 +27,28 @@ def train_dimred(models_dir: Path, store_dir: Path):
 
     # save model
     dump(model, models_dir / "dimred.joblib")
+
+
+def apply_dimred(models_dir: Path, store_dir: Path):
+    """Applies the dimensionality reduction model to the CLIP embeddings.
+
+    Args:
+        models_dir (Path): Directory containing the model.
+        store_dir (Path): Directory containing the vector store.
+    """
+    client = chromadb.PersistentClient(path=str(store_dir))
+    collection = client.get_collection(name="clip_image_embeddings")
+
+    model = load(models_dir / "dimred.joblib")
+
+    dataset = np.array(
+        collection.get(
+            include=["embeddings"],
+        )["embeddings"]
+    )
+
+    transformed = model.transform(dataset)
+    return transformed
 
 
 if __name__ == "__main__":

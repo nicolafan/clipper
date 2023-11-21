@@ -3,6 +3,7 @@ from pathlib import Path
 import chromadb
 import torch
 from PIL import Image
+from tqdm import tqdm
 from transformers import CLIPModel, CLIPProcessor
 
 MODEL = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
@@ -29,7 +30,9 @@ def clippify(images: list[Image.Image]) -> torch.Tensor:
     return outputs
 
 
-def create_embeddings_collection(image_dir: Path, store_dir: Path, batch_size: int = 32):
+def create_embeddings_collection(
+    image_dir: Path, store_dir: Path, batch_size: int = 32
+):
     """Creates a collection of CLIP embeddings from a directory of images.
 
     Args:
@@ -41,14 +44,13 @@ def create_embeddings_collection(image_dir: Path, store_dir: Path, batch_size: i
     collection = client.get_or_create_collection(name="clip_image_embeddings")
 
     image_paths = list(image_dir.glob("*.jpg"))
-    for i in range(0, len(image_paths), batch_size):
+    for i in tqdm(range(0, len(image_paths), batch_size)):
         batch_paths = image_paths[i : i + batch_size]
         batch = [Image.open(path) for path in batch_paths]
         outputs = clippify(batch)
-        
+
         collection.add(
-            embeddings=outputs.tolist(),
-            ids=[path.stem for path in batch_paths]
+            embeddings=outputs.tolist(), ids=[path.stem for path in batch_paths]
         )
 
 

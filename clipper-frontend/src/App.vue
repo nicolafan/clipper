@@ -9,7 +9,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Explore</a>
+                        <router-link class="nav-link active" aria-current="page" to="/">Explore</router-link>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#">Search</a>
@@ -18,6 +18,8 @@
             </div>
         </div>
     </nav>
+
+    <router-view></router-view>
 </template>
 
 <script>
@@ -26,5 +28,4 @@ export default {
 }
 </script>
 
-<style>
-</style>
+<style></style>
