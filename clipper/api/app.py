@@ -1,11 +1,14 @@
 import base64
+import random
 from pathlib import Path
 
 import chromadb
+import numpy as np
+import torch
 from flask import Flask, jsonify
 from flask_cors import CORS
-
-from ..process.dimred import apply_dimred
+from joblib import load
+from transformers import CLIPModel, CLIPProcessor
 
 app = Flask(__name__)
 CORS(app)
@@ -14,35 +17,42 @@ PROJECT_DIR = Path.cwd().parents[1]
 MODELS_DIR = PROJECT_DIR / "models"
 IMAGES_DIR = PROJECT_DIR / "data" / "images"
 STORE_DIR = PROJECT_DIR / "data" / "store"
+CLIP_PROCESSOR = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+CLIP_MODEL = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+SCALER = load(MODELS_DIR / "scaler.joblib")
+DIMRED_MODEL = load(MODELS_DIR / "dimred.joblib")
 
 
 @app.route("/")
 def get_dataset():
-    dataset = apply_dimred(MODELS_DIR, STORE_DIR)
-
     client = chromadb.PersistentClient(path=str(STORE_DIR))
     collection = client.get_collection(name="clip_image_embeddings")
-    ids = collection.get()["ids"]
+    dataset = collection.get(include=["embeddings"], limit=1000)
 
+    ids, embs = dataset["ids"], dataset["embeddings"]
+    scaled_embs = SCALER.transform(embs)
+    # add a column of 0s to the end of scaled_embs
+    flags = np.zeros(len(scaled_embs))
+    scaled_embs = np.column_stack((scaled_embs, flags))
+    transformed_embs = DIMRED_MODEL.transform(scaled_embs)
+
+    # numpy array to list of floats
+    transformed_embs = transformed_embs.tolist()
     data = {
-        "datasets": [
+        "label": "CLIP embeddings",
+        "fill": False,
+        "borderColor": "#f87979",
+        "backgroundColor": "#f87979",
+        "data": [
             {
-                "label": "CLIP embeddings",
-                "fill": False,
-                "borderColor": "#f87979",
-                "backgroundColor": "#f87979",
-                "data": [
-                    {
-                        "x": x,
-                        "y": y,
-                        "id": id,
-                    }
-                    for (x, y), id in zip(dataset, ids)
-                ],
-                "radius": 5,
-                "hoverRadius": 10,
+                "x": x,
+                "y": y,
+                "id": id,
             }
-        ]
+            for (x, y), id in zip(transformed_embs, ids)
+        ],
+        "radius": 5,
+        "hoverRadius": 10,
     }
     return jsonify(data)
 
@@ -53,3 +63,40 @@ def get_image(id):
     with open(filepath, "rb") as f:
         image = base64.b64encode(f.read()).decode("utf-8")
     return jsonify({"image": image})
+
+
+@app.route("/query/<query>")
+def make_query(query):
+    with torch.no_grad():
+        input = CLIP_PROCESSOR(
+            text=[query],
+            images=None,
+            return_tensors="pt",
+            padding=True,
+        )
+        output = CLIP_MODEL.get_text_features(**input)
+
+    scaled_output = SCALER.transform(output)
+    # add a column of 1s to the end of scaled_output
+    flags = np.ones(len(scaled_output))
+    scaled_output = np.column_stack((scaled_output, flags))
+    transformed_output = DIMRED_MODEL.transform(scaled_output)
+
+    transformed_output = transformed_output.tolist()
+    data = {
+        "label": "New Query",
+        "fill": False,
+        "borderColor": "#00ffff",
+        "backgroundColor": "#00ffff",
+        "data": [
+            {
+                "x": x,
+                "y": y,
+                "text": query,
+            }
+            for x, y in transformed_output
+        ],
+        "radius": 5,
+        "hoverRadius": 10,
+    }
+    return jsonify(data)

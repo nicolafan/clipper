@@ -1,7 +1,7 @@
 <template>
     <div class="chart-container">
         <div class="chart-wrapper">
-            <Scatter ref="scatter" :data="data" :options="options" @mousemove="onClick"/>
+            <Scatter ref="scatter" :data="scatterData" :options="options" @mousemove="onClick" />
         </div>
     </div>
 </template>
@@ -32,7 +32,6 @@ import {
     Scatter,
     getElementAtEvent
 } from 'vue-chartjs'
-import axios from 'axios'
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend)
 
@@ -45,36 +44,28 @@ export default {
         element: {
             type: Object,
             default: null
+        },
+        scatterData: {
+            type: Object,
+            default: null
         }
     },
     data() {
         return {
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'Scatter Dataset',
-                        data: [],
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgb(255, 99, 132)',
-                        borderWidth: 1
-                    }
-                ]
-            },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            footer: function () {}
+                        }
+                    }
+                }
             }
         }
     },
     methods: {
-        loadDataset() {
-            axios.get('/').then(response => {
-                this.data = response.data
-            }).catch(error => {
-                console.log(error)
-            })
-        },
         elementAtEvent(element) {
             if (!element.length) {
                 return
@@ -82,8 +73,12 @@ export default {
 
             // if element is the same as before, do nothing
             const { datasetIndex, index } = element[0]
-            const newElement = this.data.datasets[datasetIndex].data[index]
-            
+            if (this.scatterData.datasets[datasetIndex].label !== 'CLIP embeddings') {
+                return
+            }
+
+            const newElement = this.scatterData.datasets[datasetIndex].data[index]
+
             if (this.element && this.element === newElement) {
                 return
             }
@@ -99,10 +94,18 @@ export default {
             if (!chart) return
 
             this.elementAtEvent(getElementAtEvent(chart, event))
+        },
+        footerCallback(tooltipItems) {
+            let element = null;
+            tooltipItems.forEach((tooltipItem) => {
+                element = this.scatterData.datasets[tooltipItem.datasetIndex].data[tooltipItem.dataIndex];
+            });
+            // if element has text property return it otherwise return empty string
+            return element && element.text ? element.text : '';
         }
     },
-    mounted() {
-        this.loadDataset()
+    beforeMount() {
+        this.options.plugins.tooltip.callbacks.footer = this.footerCallback;
     }
 }
 </script>
