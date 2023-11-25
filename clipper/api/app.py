@@ -28,13 +28,12 @@ def get_dataset():
     client = chromadb.PersistentClient(path=str(STORE_DIR))
     collection = client.get_collection(name="clip_image_embeddings")
     dataset = collection.get(include=["embeddings"], limit=1000)
-
     ids, embs = dataset["ids"], dataset["embeddings"]
-    scaled_embs = SCALER.transform(embs)
+
     # add a column of 0s to the end of scaled_embs
-    flags = np.zeros(len(scaled_embs))
-    scaled_embs = np.column_stack((scaled_embs, flags))
-    transformed_embs = DIMRED_MODEL.transform(scaled_embs)
+    flags = np.zeros(len(embs))
+    embs = np.column_stack((embs, flags))
+    transformed_embs = DIMRED_MODEL.transform(embs)
 
     # numpy array to list of floats
     transformed_embs = transformed_embs.tolist()
@@ -76,11 +75,10 @@ def make_query(query):
         )
         output = CLIP_MODEL.get_text_features(**input)
 
-    scaled_output = SCALER.transform(output)
     # add a column of 1s to the end of scaled_output
-    flags = np.ones(len(scaled_output))
-    scaled_output = np.column_stack((scaled_output, flags))
-    transformed_output = DIMRED_MODEL.transform(scaled_output)
+    flags = np.ones(len(output))
+    output = np.column_stack((output, flags))
+    transformed_output = DIMRED_MODEL.transform(output)
 
     transformed_output = transformed_output.tolist()
     data = {
