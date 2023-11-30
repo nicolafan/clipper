@@ -51,7 +51,7 @@ def fit_dimred(models_dir: Path, store_dir: Path):
         else:
             return 1.0 - (result / np.sqrt(norm_x * norm_y))
 
-    model = UMAP(n_components=2, metric=custom_cosine, disconnection_distance=2)
+    model = UMAP(n_components=2, metric=custom_cosine, n_neighbors=5, disconnection_distance=2)
     model.fit(image_embs)
 
     dump(model, models_dir / "dimred.joblib")

@@ -27,8 +27,8 @@ DIMRED_MODEL = load(MODELS_DIR / "dimred.joblib")
 def get_dataset():
     client = chromadb.PersistentClient(path=str(STORE_DIR))
     collection = client.get_collection(name="clip_image_embeddings")
-    dataset = collection.get(include=["embeddings"], limit=1000)
-    ids, embs = dataset["ids"], dataset["embeddings"]
+    dataset = collection.get(include=["embeddings", "metadatas"], limit=1000)
+    ids, embs, metadatas = dataset["ids"], dataset["embeddings"], dataset["metadatas"]
 
     # add a column of 0s to the end of scaled_embs
     flags = np.zeros(len(embs))
@@ -37,22 +37,15 @@ def get_dataset():
 
     # numpy array to list of floats
     transformed_embs = transformed_embs.tolist()
-    data = {
-        "label": "CLIP embeddings",
-        "fill": False,
-        "borderColor": "#f87979",
-        "backgroundColor": "#f87979",
-        "data": [
-            {
-                "x": x,
-                "y": y,
-                "id": id,
-            }
-            for (x, y), id in zip(transformed_embs, ids)
-        ],
-        "radius": 5,
-        "hoverRadius": 10,
-    }
+    data = [
+        {
+            "x": x,
+            "y": y,
+            "id": id,
+            "metadata": metadata,
+        }
+        for (x, y), id, metadata in zip(transformed_embs, ids, metadatas)
+    ]
     return jsonify(data)
 
 
@@ -81,20 +74,12 @@ def make_query(query):
     transformed_output = DIMRED_MODEL.transform(output)
 
     transformed_output = transformed_output.tolist()
-    data = {
-        "label": "New Query",
-        "fill": False,
-        "borderColor": "#00ffff",
-        "backgroundColor": "#00ffff",
-        "data": [
-            {
-                "x": x,
-                "y": y,
-                "text": query,
-            }
-            for x, y in transformed_output
-        ],
-        "radius": 5,
-        "hoverRadius": 10,
-    }
+    data = [
+        {
+            "x": x,
+            "y": y,
+            "text": query,
+        }
+        for x, y in transformed_output
+    ]
     return jsonify(data)

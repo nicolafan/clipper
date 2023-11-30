@@ -73,7 +73,7 @@ export default {
 
             // if element is the same as before, do nothing
             const { datasetIndex, index } = element[0]
-            if (this.scatterData.datasets[datasetIndex].label !== 'CLIP embeddings') {
+            if (this.scatterData.datasets[datasetIndex].label !== 'Image embeddings') {
                 return
             }
 
@@ -96,12 +96,15 @@ export default {
             this.elementAtEvent(getElementAtEvent(chart, event))
         },
         footerCallback(tooltipItems) {
-            let element = null;
+            let selElement = null;
             tooltipItems.forEach((tooltipItem) => {
-                element = this.scatterData.datasets[tooltipItem.datasetIndex].data[tooltipItem.dataIndex];
+                let possibleSelElement = this.scatterData.datasets[tooltipItem.datasetIndex].data[tooltipItem.dataIndex];
+                if (possibleSelElement && possibleSelElement.text) {
+                    selElement = possibleSelElement;
+                }
             });
             // if element has text property return it otherwise return empty string
-            return element && element.text ? element.text : '';
+            return selElement && selElement.text ? selElement.text : '';
         }
     },
     beforeMount() {

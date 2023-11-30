@@ -7,8 +7,11 @@
             <div class="image-container">
                 <img :src="'data:image/jpeg;base64,' + image" alt="Image" />
             </div>
-
-            <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+            <div v-if="element" class="card-text">
+                <div v-for="(value, key) in element.metadata" :key="key">
+                    <b>{{ key }}:</b> {{ value }}
+                </div>
+            </div>
         </div>
     </div>
 </template>

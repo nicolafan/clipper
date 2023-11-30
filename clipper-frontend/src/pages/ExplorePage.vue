@@ -41,11 +41,31 @@ export default {
                 labels: [],
                 datasets: [
                     {
-                        label: 'Queries',
+                        label: 'New text query',
+                        fill: false,
+                        borderColor: '#00ffff',
+                        backgroundColor: '#00ffff',
                         data: [],
-                        backgroundColor: '#0047ab',
+                        radius: 5,
+                        hoverRadius: 8,
+                    },
+                    {
+                        label: 'Text queries',
+                        fill: false,
                         borderColor: '#0047ab',
-                        borderWidth: 1
+                        backgroundColor: '#0047ab',
+                        data: [],
+                        radius: 3,
+                        hoverRadius: 6
+                    },
+                    {
+                        label: "Image embeddings",
+                        fill: false,
+                        borderColor: '#f87979',
+                        backgroundColor: '#f87979',
+                        data: [],
+                        radius: 5,
+                        hoverRadius: 8
                     }
                 ]
             }),
@@ -64,21 +84,14 @@ export default {
 
             axios.get('/query/' + this.query)
                 .then(response => {
-                    // make a copy of scatterData
                     let newScatterData = JSON.parse(JSON.stringify(this.scatterData))
-                    // take dataset with label 'Queries'
-                    let queriesDataset = newScatterData.datasets.find(dataset => dataset.label === 'Queries')
-                    // if dataset with label 'New Query' exists add its data to the existing dataset
-                    for (let i = 0; i < newScatterData.datasets.length; i++) {
-                        if (newScatterData.datasets[i].label === 'New Query') {
-                            queriesDataset.data.push(newScatterData.datasets[i].data[0])
-                            // remove dataset with label 'New Query'
-                            newScatterData.datasets.splice(i, 1)
-                        }
-                    }
-                    // push new data to newScatterData.datasets
-                    newScatterData.datasets.push(response.data)
-                    // update scatterData
+                    let textQueriesDataset = newScatterData.datasets.find(dataset => dataset.label === 'Text queries')
+                    let newTextQueryDataset = newScatterData.datasets.find(dataset => dataset.label === 'New text query')
+                    
+                    // append newTextQueryDataset to textQueriesDataset
+                    textQueriesDataset.data.push(...newTextQueryDataset.data)
+                    newTextQueryDataset.data = response.data
+
                     this.scatterData = newScatterData
                 })
                 .catch(error => {
@@ -88,7 +101,8 @@ export default {
         loadDataset() {
             axios.get('/').then(response => {
                 let newScatterData = JSON.parse(JSON.stringify(this.scatterData))
-                newScatterData.datasets.push(response.data)
+                let imageEmbeddingsDataset = newScatterData.datasets.find(dataset => dataset.label === 'Image embeddings')
+                imageEmbeddingsDataset.data = response.data
                 this.scatterData = newScatterData
             }).catch(error => {
                 console.log(error)
