@@ -42,15 +42,18 @@ def get_dataset(page):
 
     # numpy array to list of floats
     transformed_embs = transformed_embs.tolist()
-    data = [
-        {
-            "x": x,
-            "y": y,
-            "id": id,
-            "metadata": metadata,
-        }
-        for (x, y), id, metadata in zip(transformed_embs, ids, metadatas)
-    ]
+    data = {
+        "dataset": [
+            {
+                "x": x,
+                "y": y,
+                "id": id,
+                "metadata": metadata,
+            }
+            for (x, y), id, metadata in zip(transformed_embs, ids, metadatas)
+        ],
+        "nPages": np.ceil(collection.count() / 1000),
+    }
     return jsonify(data)
 
 

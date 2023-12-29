@@ -9,7 +9,7 @@
 <style scoped>
 .chart-container {
     display: flex;
-    height: 80vh;
+    height: 70vh;
     /* Adjust as needed */
 }
 

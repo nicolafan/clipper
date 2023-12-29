@@ -20,7 +20,7 @@
 .image-container {
     display: flex;
     justify-content: center;
-    height: 50vh;
+    height: 40vh;
 }
 
 .image-container img {
