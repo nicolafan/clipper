@@ -98,8 +98,8 @@ export default {
                     console.log(error)
                 })
         },
-        loadDataset() {
-            axios.get('/').then(response => {
+        loadDataset(page) {
+            axios.get('/' + page).then(response => {
                 let newScatterData = JSON.parse(JSON.stringify(this.scatterData))
                 let imageEmbeddingsDataset = newScatterData.datasets.find(dataset => dataset.label === 'Image embeddings')
                 imageEmbeddingsDataset.data = response.data
@@ -110,7 +110,7 @@ export default {
         },
     },
     mounted() {
-        this.loadDataset()
+        this.loadDataset(1)
     }
 }
 </script>

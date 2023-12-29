@@ -3,8 +3,8 @@ import logging
 from pathlib import Path
 
 import chromadb
-from datasets import load_dataset
 import torch
+from datasets import load_dataset
 from PIL import Image
 from tqdm import tqdm
 from transformers import CLIPModel, CLIPProcessor
@@ -25,7 +25,9 @@ def clippify_texts(texts: list[str]) -> torch.Tensor:
     Returns:
         torch.Tensor: A tensor of CLIP embeddings.
     """
-    inputs = PROCESSOR(text=texts, return_tensors="pt", padding="max_length", truncation=True)
+    inputs = PROCESSOR(
+        text=texts, return_tensors="pt", padding="max_length", truncation=True
+    )
     inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
 
     outputs = MODEL.get_text_features(**inputs)
@@ -61,8 +63,9 @@ def create_embeddings_collection(
     """
     # create store
     client = chromadb.PersistentClient(path=str(store_dir))
-    image_collection = client.get_or_create_collection(name="clip_image_embeddings")
-    text_collection = client.get_or_create_collection(name="clip_text_embeddings2")
+    image_collection = client.create_collection(
+        name="clip_image_embeddings", metadata={"hnsw:space": "cosine"}
+    )
 
     # read metadatas if file is present
     try:
@@ -76,39 +79,29 @@ def create_embeddings_collection(
 
     logging.info(f"Found {len(image_paths)} images.")
     logging.info("Generating image embeddings...")
-    # for i in tqdm(range(0, len(image_paths), batch_size)):
-    #     batch_paths = image_paths[i : i + batch_size]
-    #     batch = [Image.open(path).convert("RGB") for path in batch_paths]
-    #     outputs = clippify(batch)
+    for i in tqdm(range(0, len(image_paths), batch_size)):
+        # clippify batch
+        batch_paths = image_paths[i : i + batch_size]
+        batch = [Image.open(path).convert("RGB") for path in batch_paths]
+        outputs = clippify(batch)
 
-    #     # add metadatas
-    #     batch_metadatas = []
-    #     for path in batch_paths:
-    #         if path.stem in metadatas:
-    #             instance_metadata = metadatas[path.stem]
-    #             instance_metadata = {
-    #                 k: v for k, v in instance_metadata.items() if v is not None
-    #             }
-    #             batch_metadatas.append(instance_metadata)
-    #         else:
-    #             batch_metadatas.append({})
+        # add metadatas
+        batch_metadatas = []
+        for path in batch_paths:
+            if path.stem in metadatas:
+                instance_metadata = metadatas[path.stem]
+                instance_metadata = {
+                    k: v for k, v in instance_metadata.items() if v is not None
+                }
+                batch_metadatas.append(instance_metadata)
+            else:
+                batch_metadatas.append({})
 
-    #     image_collection.add(
-    #         embeddings=outputs.tolist(),
-    #         ids=[path.stem for path in batch_paths],
-    #         metadatas=batch_metadatas,
-    #     )
-    with open("captions.txt", "r") as f:
-        texts = f.readlines()
-    logging.info("Generating text embeddings...")
-    for i in tqdm(range(0, len(texts), batch_size)):
-        batch_texts = texts[i : i + batch_size]
-        outputs = clippify_texts(batch_texts)
-
-        text_collection.add(
+        # add batch to store
+        image_collection.add(
             embeddings=outputs.tolist(),
-            ids=[f"text_{j}" for j in range(i, i + batch_size)],
-            metadatas=[{"text": text} for text in batch_texts],
+            ids=[path.stem for path in batch_paths],
+            metadatas=batch_metadatas,
         )
 
 

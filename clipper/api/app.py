@@ -23,11 +23,16 @@ SCALER = load(MODELS_DIR / "scaler.joblib")
 DIMRED_MODEL = load(MODELS_DIR / "dimred.joblib")
 
 
-@app.route("/")
-def get_dataset():
+@app.route("/<int:page>")
+def get_dataset(page):
     client = chromadb.PersistentClient(path=str(STORE_DIR))
     collection = client.get_collection(name="clip_image_embeddings")
-    dataset = collection.get(include=["embeddings", "metadatas"], limit=1000)
+
+    offset = (page - 1) * 1000
+
+    dataset = collection.get(
+        include=["embeddings", "metadatas"], limit=1000, offset=offset
+    )
     ids, embs, metadatas = dataset["ids"], dataset["embeddings"], dataset["metadatas"]
 
     # add a column of 0s to the end of scaled_embs
