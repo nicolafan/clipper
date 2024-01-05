@@ -12,7 +12,7 @@
                         <router-link class="nav-link active" aria-current="page" to="/">Explore</router-link>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Search</a>
+                        <router-link class="nav-link active" aria-current="page" to="/search">Search</router-link>
                     </li>
                 </ul>
             </div>
