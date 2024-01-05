@@ -27,10 +27,16 @@ def get_dataset(page):
     client = chromadb.PersistentClient(path=str(STORE_DIR))
     collection = client.get_collection(name="clip_image_embeddings")
 
+    all_ids = collection.get(include=[])["ids"]
+    random.seed(42)
+    random.shuffle(all_ids)
+
     offset = (page - 1) * 1000
+    ids_to_get = all_ids[offset : offset + 1000]
+    print(ids_to_get)
 
     dataset = collection.get(
-        include=["embeddings", "metadatas"], limit=1000, offset=offset
+        ids=ids_to_get, include=["embeddings", "metadatas"]
     )
     ids, embs, metadatas = dataset["ids"], dataset["embeddings"], dataset["metadatas"]
 
@@ -110,10 +116,7 @@ def search():
         )
         output = CLIP_MODEL.get_text_features(**input)
 
-    results = collection.query(
-        query_embeddings=output.tolist()[0],
-        n_results=100
-    )
+    results = collection.query(query_embeddings=output.tolist()[0], n_results=100)
     results["images"] = [[]]
 
     # load images
@@ -124,5 +127,3 @@ def search():
         results["images"][0].append(image)
 
     return jsonify(results)
-    
-

@@ -1,7 +1,7 @@
 <template>
     <div class="container-fluid mt-5">
         <div class="row">
-            <div class="col-6">
+            <div class="col-8">
                 <ScatterPlot v-if="!isLoading" :scatterData="scatterData" :element="element"
                     @update:element="handleUpdateElement">
                 </ScatterPlot>
@@ -11,7 +11,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6">
+            <div class="col-4">
                 <div class="d-flex justify-content-between">
                     <div class="col-9 pe-2">
                         <input type="text" class="form-control" v-model="query" placeholder="Enter your query here">

@@ -16,9 +16,12 @@
         </div>
         <div v-if="searchResults" class="gallery mt-5">
             <template v-for="(result, index) in searchResults.ids[0]" :key="index">
-                <div>
+                <div style="position: relative;">
                     <!-- show image only if the url works -->
                     <img :src="'data:image/jpeg;base64,' + searchResults.images[0][index]" alt="Image">
+                    <div style="position: absolute; bottom: 0; right: 0; background: rgba(0, 0, 0, 0.5); color: white; padding: 5px;">
+                        {{ "Similarity: " + (1 - searchResults.distances[0][index]).toFixed(2) }}
+                    </div>
                 </div>
             </template>
         </div>
@@ -34,7 +37,7 @@
 }
 
 .gallery img {
-    width: 90%;
+    width: 100%;
     height: auto;
     object-fit: cover;
     border-radius: 5px;

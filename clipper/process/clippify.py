@@ -4,7 +4,6 @@ from pathlib import Path
 
 import chromadb
 import torch
-from datasets import load_dataset
 from PIL import Image
 from tqdm import tqdm
 from transformers import CLIPModel, CLIPProcessor
@@ -106,6 +105,7 @@ def create_embeddings_collection(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     image_dir = Path("data") / "images"
     store_dir = Path("data") / "store"
     create_embeddings_collection(image_dir, store_dir)
