@@ -33,7 +33,6 @@ def get_dataset(page):
 
     offset = (page - 1) * 1000
     ids_to_get = all_ids[offset : offset + 1000]
-    print(ids_to_get)
 
     dataset = collection.get(
         ids=ids_to_get, include=["embeddings", "metadatas"]
@@ -105,7 +104,6 @@ def search():
 
     # read get param query
     query = request.args.get("query")
-    print(query)
 
     with torch.no_grad():
         input = CLIP_PROCESSOR(
