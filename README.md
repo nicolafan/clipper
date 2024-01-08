@@ -77,7 +77,7 @@ Clipper requires a dataset of `.jpg` images. The images have to be stored in the
 }
 ```
 
-where `image_id_1`, `image_id_2`, etc. are the filenames of the images without the `.jpg` extension. Supported metadata types are declared in the ChromaDB documentation. The JSON file has to be stored in the `data/images` directory.
+where `image_id_1`, `image_id_2`, etc. are the filenames of the images without the `.jpg` extension. Supported metadata types are declared in the ChromaDB documentation. The JSON file has to be stored in the `data/images` directory with the name `metadata.json`.
 
 ### Creating the Embeddings
 
